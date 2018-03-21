@@ -1,12 +1,11 @@
 package us.hebi.oauth2.server.rest;
 
-import com.github.scribejava.apis.GoogleApi20;
-import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 
 import javax.ejb.Stateless;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -34,14 +33,15 @@ public class RestResource {
     @Path("private/{id}")
     public Response getPrivateItem(@PathParam("id") int id, @Context HttpHeaders headers) throws Exception {
 
-        // Check if user added token
+        // Check if user is authenticated
         String token = headers.getRequestHeaders().getFirst("Authorization");
         if (token == null)
             return Response.status(Response.Status.FORBIDDEN).build();
+        token = token.substring("Bearer ".length());
 
-        // Check if token is valid
+        // Check if user is authorized
         OAuthRequest oReq = new OAuthRequest(Verb.GET, "https://www.googleapis.com/plus/v1/people/me");
-        oReq.addHeader("Authorization", token);
+        service.signRequest(token, oReq);
         String json = service.execute(oReq).getBody();
 
         // TODO: filter users based on e.g. domain
@@ -51,15 +51,7 @@ public class RestResource {
 
     }
 
-    private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
-    private static final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
-    private static final String callbackUri = "http://localhost:8089/callback";
-    private final OAuth20Service service = new ServiceBuilder(clientId)
-            .apiKey(clientId)
-            .apiSecret(clientSecret)
-            .callback(callbackUri)
-            .scope("openid profile email")
-            .responseType("code")
-            .build(GoogleApi20.instance());
+    @Inject
+    OAuth20Service service;
 
 }
