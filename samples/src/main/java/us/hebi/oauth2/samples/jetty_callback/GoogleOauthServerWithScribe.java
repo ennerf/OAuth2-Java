@@ -1,19 +1,16 @@
-package us.hebi.oauth2.samples.google_oauth;
+package us.hebi.oauth2.samples.jetty_callback;
 
 /**
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
  */
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.github.scribejava.apis.GoogleApi20;
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.model.*;
+import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.oauth.OAuthService;
+import com.google.common.collect.ImmutableMap;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -33,13 +30,24 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.google.common.collect.ImmutableMap;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
- * Source: https://github.com/andrewrapp/google-oauth
- * Blog: http://highaltitudedev.blogspot.co.at/2013/10/google-oauth2-with-jettyservlets.html
+ * Same as original GoogleOauthServer, but using the Scribe library rather than text urls
+ * See https://github.com/scribejava/scribejava
+ * <p>
+ * Sort of following https://oneminutedistraction.wordpress.com/2014/04/29/using-oauth-for-your-javaee-login/
  */
-public class GoogleOauthServer {
+public class GoogleOauthServerWithScribe {
 
     private Server server = new Server(8089);
 
@@ -48,7 +56,7 @@ public class GoogleOauthServer {
     private final String callbackUri = "http://localhost:8089/callback";
 
     public static void main(String[] args) throws Exception {
-        new GoogleOauthServer().startJetty();
+        new GoogleOauthServerWithScribe().startJetty();
     }
 
     public void startJetty() throws Exception {
@@ -58,8 +66,8 @@ public class GoogleOauthServer {
         server.setHandler(context);
 
         // map servlets to endpoints
-        context.addServlet(new ServletHolder(new SigninServlet()),"/signin");
-        context.addServlet(new ServletHolder(new CallbackServlet()),"/callback");
+        context.addServlet(new ServletHolder(new SigninServlet()), "/signin");
+        context.addServlet(new ServletHolder(new CallbackServlet()), "/callback");
 
         server.start();
         server.join();
@@ -67,25 +75,35 @@ public class GoogleOauthServer {
 
     class SigninServlet extends HttpServlet {
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,IOException {
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-            // redirect to google for authorization
-            StringBuilder oauthUrl = new StringBuilder().append("https://accounts.google.com/o/oauth2/auth")
-                    .append("?client_id=").append(clientId) // the client id from the api console registration
-                    .append("&response_type=code")
-                    .append("&scope=openid%20email") // scope is the api permissions we are requesting
-                    .append("&redirect_uri=").append(callbackUri) // the servlet that google redirects to after authorization
-                    .append("&state=this_can_be_anything_to_help_correlate_the_response%3Dlike_session_id")
-                    .append("&access_type=offline") // here we are asking to access to user's data while they are not signed in
-                    .append("&approval_prompt=force"); // this requires them to verify which account to use, if they are already signed in
+            GoogleApi20 api = GoogleApi20.instance();
+            OAuth20Service service = new ServiceBuilder(clientId)
+                    .apiKey(clientId) // the client id from the api console registration
+                    .apiSecret(clientSecret)
+                    .callback(callbackUri) // the servlet that google redirects to after authorization
+                    .scope("openid profile email") // scope is the api permissions we are requesting
+                    .state("state to correlate the response such as session id")
+                    .responseType("code")
+                    .debug()
+                    .build(api);
 
-            resp.sendRedirect(oauthUrl.toString());
+            // Add to session
+            req.getSession().setAttribute("oauth2service", service);
+
+            Map<String, String> additionalParams = new HashMap<>();
+            additionalParams.put("access_type", "offline"); // here we are asking to access to user's data while they are not signed in
+            additionalParams.put("approval_prompt", "force"); // this requires them to verify which account to use, if they are already signed in
+
+            String authUrl = api.getAuthorizationUrl(service.getConfig(), additionalParams);
+            resp.sendRedirect(authUrl);
+
         }
     }
 
     class CallbackServlet extends HttpServlet {
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,IOException {
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             // google redirects with
             /*
                 http://localhost:8089/callback?
@@ -96,29 +114,27 @@ public class GoogleOauthServer {
                     &session_state=a3d1eb134189705e9acf2f573325e6f30dd30ee4..d62c
             */
 
-
             // if the user denied access, we get back an error, ex
             // error=access_denied&state=session%3Dpotatoes
-
             if (req.getParameter("error") != null) {
                 resp.getWriter().println(req.getParameter("error"));
                 return;
             }
 
-            // google returns a code that can be exchanged for a access token
-            String code = req.getParameter("code");
-
-            // get the access token by post to Google
-            String body = post("https://accounts.google.com/o/oauth2/token", ImmutableMap.<String,String>builder()
-                    .put("code", code)
-                    .put("client_id", clientId)
-                    .put("client_secret", clientSecret)
-                    .put("redirect_uri", callbackUri)
-                    .put("grant_type", "authorization_code").build());
+            // Construct the access token from the returned authorization code
+            OAuth20Service service = (OAuth20Service) req.getSession().getAttribute("oauth2service");
+            final OAuth2AccessToken token;
+            try {
+                token = service.getAccessToken(req.getParameter("code"));
+                req.getSession().setAttribute("token", token);
+            } catch (Exception e) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+                return;
+            }
 
             // ex. returns
             /*
-			{
+            {
 			    "access_token": "ya29.AHES6ZQS-BsKiPxdU_iKChTsaGCYZGcuqhm_A5bef8ksNoU",
 			    "token_type": "Bearer",
 			    "expires_in": 3600,
@@ -127,28 +143,20 @@ public class GoogleOauthServer {
 			}
 			*/
 
-            JSONObject jsonObject = null;
-
-            // get the access token from json and request info from Google
+            // get some info about the user with the access token
+            OAuthRequest oReq = new OAuthRequest(Verb.GET, "https://www.googleapis.com/oauth2/v2/userinfo");
+            service.signRequest(token, oReq);
+            final Response oResp;
             try {
-                jsonObject = (JSONObject) new JSONParser().parse(body);
-            } catch (ParseException e) {
-                throw new RuntimeException("Unable to parse json " + body);
+                oResp = service.execute(oReq);
+            } catch (Exception e) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+                return;
             }
 
-            // google tokens expire after an hour, but since we requested offline access we can get a new token without user involvement via the refresh token
-            String accessToken = (String) jsonObject.get("access_token");
-
-            // you may want to store the access token in session
-            req.getSession().setAttribute("access_token", accessToken);
-
-            // get some info about the user with the access token
-            String json = get(new StringBuilder("https://www.googleapis.com/oauth2/v1/userinfo?access_token=").append(accessToken).toString());
-
-            // now we could store the email address in session
-
             // return the json of the user's basic info
-            resp.getWriter().println(json);
+            resp.getWriter().println(oResp.getBody());
+
         }
     }
 
@@ -158,10 +166,10 @@ public class GoogleOauthServer {
     }
 
     // makes a POST request to url with form parameters and returns body as a string
-    public String post(String url, Map<String,String> formParameters) throws ClientProtocolException, IOException {
+    public String post(String url, Map<String, String> formParameters) throws ClientProtocolException, IOException {
         HttpPost request = new HttpPost(url);
 
-        List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 
         for (String key : formParameters.keySet()) {
             nvps.add(new BasicNameValuePair(key, formParameters.get(key)));
@@ -186,4 +194,5 @@ public class GoogleOauthServer {
 
         return body;
     }
+
 }
