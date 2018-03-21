@@ -43,8 +43,8 @@ public class GoogleOauthServer {
 
     private Server server = new Server(8089);
 
-    private final String clientId = "428385348633.apps.googleusercontent.com";
-    private final String clientSecret = "zJpDtrqk7is9OwjDNWi5CzOK";
+    private final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
+    private final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
     private final String callbackUri = "http://localhost:8089/callback";
 
     public static void main(String[] args) throws Exception {
