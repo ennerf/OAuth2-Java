@@ -32,6 +32,8 @@ public class DashboardPresenter implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // google plus: https://www.googleapis.com/plus/v1/people/me
+        // field subset: https://www.googleapis.com/oauth2/v2/userinfo?fields=id,name,email,picture,hd
         urlField.setText("https://www.googleapis.com/oauth2/v2/userinfo");
     }
 
