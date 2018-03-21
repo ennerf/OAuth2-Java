@@ -1,10 +1,5 @@
 package us.hebi.oauth2.samples.jetty_callback;
 
-/**
- * @author Florian Enner < florian @ hebirobotics.com >
- * @since 21 Mar 2018
- */
-
 import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
@@ -12,18 +7,6 @@ import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -33,9 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -154,41 +135,6 @@ public class GoogleOauthServerWithScribe {
             resp.getWriter().println(oResp.getBody());
 
         }
-    }
-
-    // makes a GET request to url and returns body as a string
-    public String get(String url) throws ClientProtocolException, IOException {
-        return execute(new HttpGet(url));
-    }
-
-    // makes a POST request to url with form parameters and returns body as a string
-    public String post(String url, Map<String, String> formParameters) throws ClientProtocolException, IOException {
-        HttpPost request = new HttpPost(url);
-
-        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-
-        for (String key : formParameters.keySet()) {
-            nvps.add(new BasicNameValuePair(key, formParameters.get(key)));
-        }
-
-        request.setEntity(new UrlEncodedFormEntity(nvps));
-
-        return execute(request);
-    }
-
-    // makes request and checks response code for 200
-    private String execute(HttpRequestBase request) throws ClientProtocolException, IOException {
-        HttpClient httpClient = new DefaultHttpClient();
-        HttpResponse response = httpClient.execute(request);
-
-        HttpEntity entity = response.getEntity();
-        String body = EntityUtils.toString(entity);
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-            throw new RuntimeException("Expected 200 but got " + response.getStatusLine().getStatusCode() + ", with body " + body);
-        }
-
-        return body;
     }
 
 }
