@@ -52,7 +52,7 @@ public class DashboardPresenter implements Initializable {
 
     @FXML
     void createSignedGetRequest(ActionEvent event) {
-        OAuthRequest oReq = new OAuthRequest(Verb.GET, "https://www.googleapis.com/oauth2/v2/userinfo");
+        OAuthRequest oReq = new OAuthRequest(Verb.GET, urlField.getText());
         textArea.setText(authenticationService.requestSigned(oReq).orElse("N/A"));
     }
 
