@@ -1,8 +1,6 @@
 package us.hebi.oauth2.server.rest;
 
-import com.github.scribejava.core.model.OAuthRequest;
-import com.github.scribejava.core.model.Verb;
-import com.github.scribejava.core.oauth.OAuth20Service;
+import us.hebi.oauth2.server.OAuthAuthorizationService;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -14,6 +12,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
+
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
 /**
  * REST endpoint that accepts authorization token and confirms its validity
@@ -34,24 +35,18 @@ public class RestResource {
     public Response getPrivateItem(@PathParam("id") int id, @Context HttpHeaders headers) throws Exception {
 
         // Check if user is authenticated
-        String token = headers.getRequestHeaders().getFirst("Authorization");
-        if (token == null)
-            return Response.status(Response.Status.FORBIDDEN).build();
-        token = token.substring("Bearer ".length());
-
-        // Check if user is authorized
-        OAuthRequest oReq = new OAuthRequest(Verb.GET, "https://www.googleapis.com/plus/v1/people/me");
-        service.signRequest(token, oReq);
-        String json = service.execute(oReq).getBody();
+        Optional<String> json = service.extractAuthenticationToken(headers.getRequestHeaders())
+                .flatMap(service::getUserInfo);
 
         // TODO: filter users based on e.g. domain
-
-        // Respond
-        return Response.ok(json).build();
+        return json
+                .map(Response::ok)
+                .orElseGet(() -> Response.status(FORBIDDEN))
+                .build();
 
     }
 
     @Inject
-    OAuth20Service service;
+    OAuthAuthorizationService service;
 
 }
