@@ -5,7 +5,6 @@ import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
-import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.sun.javafx.application.HostServicesDelegate;
 import org.eclipse.jetty.server.Server;
@@ -23,7 +22,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Prompts the user to login via the system browser and receives the oauth response on
@@ -31,6 +29,8 @@ import java.util.concurrent.ExecutionException;
  */
 public class AuthenticationService {
 
+    // TODO: use random port and check port on startup
+    // ((ServerConnector) server.getConnectors()[0]).getLocalPort();
     private Server server = new Server(8089);
 
     private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
@@ -49,7 +49,7 @@ public class AuthenticationService {
     @Inject
     HostServicesDelegate hostServices;
 
-    public void requestToken() {
+    public void requestAccessToken() {
         Map<String, String> additionalParams = new HashMap<>();
         additionalParams.put("access_type", "offline"); // here we are asking to access to user's data while they are not signed in (get refresh tokens)
         additionalParams.put("approval_prompt", "force"); // this requires them to verify which account to use, if they are already signed in
@@ -57,13 +57,20 @@ public class AuthenticationService {
         hostServices.showDocument(authUrl);
     }
 
-    public void refreshToken() throws InterruptedException, ExecutionException, IOException {
-        accessToken = service.refreshAccessToken(accessToken.getRefreshToken());
+    public void refreshAccessToken() {
+        try {
+            accessToken = service.refreshAccessToken(accessToken.getRefreshToken());
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
     }
 
-    public Optional<String> requestUserInfo() {
+    public void deleteAccessToken() {
+        accessToken = null;
+    }
+
+    public Optional<String> requestSigned(OAuthRequest oReq) {
         // get some info about the user with the access token
-        OAuthRequest oReq = new OAuthRequest(Verb.GET, "https://www.googleapis.com/oauth2/v2/userinfo");
         service.signRequest(accessToken, oReq);
         try {
             Response oResp = service.execute(oReq);
