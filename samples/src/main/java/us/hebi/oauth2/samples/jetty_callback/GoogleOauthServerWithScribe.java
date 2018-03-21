@@ -77,7 +77,6 @@ public class GoogleOauthServerWithScribe {
         @Override
         protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-            GoogleApi20 api = GoogleApi20.instance();
             OAuth20Service service = new ServiceBuilder(clientId)
                     .apiKey(clientId) // the client id from the api console registration
                     .apiSecret(clientSecret)
@@ -86,16 +85,16 @@ public class GoogleOauthServerWithScribe {
                     .state("state to correlate the response such as session id")
                     .responseType("code")
                     .debug()
-                    .build(api);
+                    .build(GoogleApi20.instance());
 
             // Add to session
             req.getSession().setAttribute("oauth2service", service);
 
             Map<String, String> additionalParams = new HashMap<>();
-            additionalParams.put("access_type", "offline"); // here we are asking to access to user's data while they are not signed in
+            additionalParams.put("access_type", "offline"); // here we are asking to access to user's data while they are not signed in (get refresh tokens)
             additionalParams.put("approval_prompt", "force"); // this requires them to verify which account to use, if they are already signed in
 
-            String authUrl = api.getAuthorizationUrl(service.getConfig(), additionalParams);
+            String authUrl = service.getAuthorizationUrl(additionalParams);
             resp.sendRedirect(authUrl);
 
         }
@@ -121,7 +120,7 @@ public class GoogleOauthServerWithScribe {
                 return;
             }
 
-            // Construct the access token from the returned authorization code
+            // Trade the request token and verifier for the access token
             OAuth20Service service = (OAuth20Service) req.getSession().getAttribute("oauth2service");
             final OAuth2AccessToken token;
             try {
@@ -132,7 +131,7 @@ public class GoogleOauthServerWithScribe {
                 return;
             }
 
-            // ex. returns
+            // token.getRawResponse() returns
             /*
             {
 			    "access_token": "ya29.AHES6ZQS-BsKiPxdU_iKChTsaGCYZGcuqhm_A5bef8ksNoU",
