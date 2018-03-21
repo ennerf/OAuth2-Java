@@ -1,11 +1,10 @@
 package us.hebi.oauth2.client.dashboard;
 
-import com.sun.javafx.application.HostServicesDelegate;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import us.hebi.oauth2.client.oauth.AuthenticationService;
 
 import javax.inject.Inject;
 import java.net.URL;
@@ -23,7 +22,7 @@ public class DashboardPresenter implements Initializable {
     private String browserUrl;
 
     @Inject
-    private HostServicesDelegate hostServices;
+    private AuthenticationService authenticationService;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -32,8 +31,7 @@ public class DashboardPresenter implements Initializable {
 
     @FXML
     void loginViaBrowser(ActionEvent event) {
-        // TODO: Replace with OAuth call
-        hostServices.showDocument(browserUrl);
+        authenticationService.requestToken();
     }
 
     @FXML
@@ -43,7 +41,7 @@ public class DashboardPresenter implements Initializable {
 
     @FXML
     void callRestrictedEndpoint(ActionEvent event) {
-
+        textArea.setText(authenticationService.requestUserInfo().orElse("N/A"));
     }
 
 }
