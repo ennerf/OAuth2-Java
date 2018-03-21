@@ -12,6 +12,7 @@
     <description>Build aggregator for building firmware.hebi.us services</description>
 
     <modules>
+        <module>samples</module>
         <module>client</module>
         <module>server</module>
     </modules>
