@@ -6,6 +6,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.pkce.AuthorizationUrlWithPKCE;
 import com.sun.javafx.application.HostServicesDelegate;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -44,6 +45,7 @@ public class AuthenticationService {
             .responseType("code")
             .build(GoogleApi20.instance());
 
+    private volatile AuthorizationUrlWithPKCE authUrl = null;
     private volatile OAuth2AccessToken accessToken = null;
 
     @Inject
@@ -53,8 +55,16 @@ public class AuthenticationService {
         Map<String, String> additionalParams = new HashMap<>();
         additionalParams.put("access_type", "offline"); // here we are asking to access to user's data while they are not signed in (get refresh tokens)
         additionalParams.put("approval_prompt", "force"); // this requires them to verify which account to use, if they are already signed in
-        String authUrl = service.getAuthorizationUrl(additionalParams);
-        hostServices.showDocument(authUrl);
+
+        // Add PKCE (Proof Key for Code Exchange) to prevent authorization interception attacks. This is recommended for
+        // installed apps that can't secure the client secret. Note that this requires the PKCE to be stored in order to
+        // verify the callback. Get more info at the following links:
+        //
+        // * https://tools.ietf.org/html/rfc7636
+        // * https://developers.google.com/identity/protocols/OAuth2InstalledApp
+        // * https://github.com/scribejava/scribejava/blob/master/scribejava-apis/src/test/java/com/github/scribejava/apis/examples/Google20WithPKCEExample.java
+        authUrl = service.getAuthorizationUrlWithPKCE(additionalParams);
+        hostServices.showDocument(authUrl.getAuthorizationUrl());
     }
 
     public void refreshAccessToken() {
@@ -114,7 +124,7 @@ public class AuthenticationService {
 
             // Trade the request token and verifier for the access token
             try {
-                accessToken = service.getAccessToken(req.getParameter("code"));
+                accessToken = service.getAccessToken(req.getParameter("code"), authUrl.getPkce().getCodeVerifier());
                 resp.getWriter().println("Successfully logged in. You can close this window.");
             } catch (Exception e) {
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
