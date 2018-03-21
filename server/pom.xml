@@ -13,7 +13,23 @@
     <artifactId>server</artifactId>
     <packaging>war</packaging>
 
+    <build>
+        <finalName>server</finalName>
+    </build>
+
     <dependencies>
+
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>7.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.scribejava</groupId>
+            <artifactId>scribejava-apis</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>

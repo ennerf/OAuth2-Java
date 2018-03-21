@@ -34,6 +34,12 @@
                 <scope>compile</scope>
             </dependency>
 
+            <dependency> <!-- OAuth2 library -->
+                <groupId>com.github.scribejava</groupId>
+                <artifactId>scribejava-apis</artifactId>
+                <version>5.3.0</version>
+            </dependency>
+
             <dependency> <!-- Google Guava (Common Lib) -->
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
