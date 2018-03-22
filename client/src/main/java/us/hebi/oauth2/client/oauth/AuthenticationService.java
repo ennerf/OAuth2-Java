@@ -39,7 +39,8 @@ public class AuthenticationService {
             .build());
 
     // TODO: use random port and check port on startup. Note that this requires the Desktop-OAuth2 version
-    int port = 8089;
+    // port = 0 with httpServer.getListeningPort()
+    private final int port = 8089;
 
     private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
     private static final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
@@ -114,6 +115,8 @@ public class AuthenticationService {
     private final NanoHTTPD httpServer = new NanoHTTPD(port) {
         @Override
         public Response serve(IHTTPSession session) {
+
+            // Handle callback uri
             if (session.getMethod() == Method.GET && "/callback".equalsIgnoreCase(session.getUri())) {
 
                 // if the user denied access, we get back an error, ex
@@ -134,7 +137,8 @@ public class AuthenticationService {
 
             }
 
-            return super.serve(session);
+            // Ignore all other request uris
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, null, null);
         }
     };
 
