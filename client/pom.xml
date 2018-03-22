@@ -27,13 +27,18 @@
         </dependency>
 
         <dependency>
+            <groupId>com.github.scribejava</groupId>
+            <artifactId>scribejava-httpclient-okhttp</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
 
-        <dependency>
+        <dependency> <!-- HTTP library -->
             <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
+            <artifactId>okhttp-urlconnection</artifactId>
         </dependency>
 
         <dependency>

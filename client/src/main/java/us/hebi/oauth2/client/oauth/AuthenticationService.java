@@ -7,7 +7,10 @@ import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.pkce.AuthorizationUrlWithPKCE;
+import com.github.scribejava.httpclient.okhttp.OkHttpHttpClient;
 import com.sun.javafx.application.HostServicesDelegate;
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -20,15 +23,27 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Prompts the user to login via the system browser and receives the oauth response on
  * a local callback.
  */
 public class AuthenticationService {
+
+    // Enable cookies in http handler to work with sessions
+    private final CookieHandler cookieHandler = new CookieManager();
+    private final OkHttpHttpClient httpClient = new OkHttpHttpClient(new OkHttpClient.Builder()
+            .cookieJar(new JavaNetCookieJar(cookieHandler))
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .writeTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(3, TimeUnit.SECONDS)
+            .build());
 
     // TODO: use random port and check port on startup
     // ((ServerConnector) server.getConnectors()[0]).getLocalPort();
@@ -43,6 +58,7 @@ public class AuthenticationService {
             .callback(callbackUri) // the servlet that google redirects to after authorization
             .scope("openid profile email") // scope is the api permissions we are requesting
             .responseType("code")
+            .httpClient(httpClient)
             .build(GoogleApi20.instance());
 
     private volatile AuthorizationUrlWithPKCE authUrl = null;
