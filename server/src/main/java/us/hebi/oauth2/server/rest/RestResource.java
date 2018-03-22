@@ -12,9 +12,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Optional;
 
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.*;
 
 /**
  * REST endpoint that accepts authorization token and confirms its validity
@@ -35,11 +34,9 @@ public class RestResource {
     public Response getPrivateItem(@PathParam("id") int id, @Context HttpHeaders headers) throws Exception {
 
         // Check if user is authenticated
-        Optional<String> json = service.extractAuthenticationToken(headers.getRequestHeaders())
-                .flatMap(service::getUserInfo);
-
         // TODO: filter users based on e.g. domain
-        return json
+        return service.extractAccessToken(headers.getRequestHeaders())
+                .flatMap(service::getUserInfo)
                 .map(Response::ok)
                 .orElseGet(() -> Response.status(FORBIDDEN))
                 .build();

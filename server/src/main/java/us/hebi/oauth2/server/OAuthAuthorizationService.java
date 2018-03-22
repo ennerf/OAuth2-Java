@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static us.hebi.oauth2.server.OptionalUtils.*;
+
 /**
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
@@ -26,24 +28,22 @@ public class OAuthAuthorizationService {
         return service.getAuthorizationUrl(additionalParams);
     }
 
-    public Optional<OAuth2AccessToken> requestAccessToken(HttpServletRequest req) {
-
-        //Check if the user have rejected
+    private boolean hasBeenRejected(HttpServletRequest req) {
         String error = req.getParameter("error");
-        if ((null != error) && ("access_denied".equals(error.trim()))) {
-            return Optional.empty();
-        }
-
-        // User has accepted, so we can trade the returned code for the access token
-        try {
-            return Optional.of(service.getAccessToken(req.getParameter("code")));
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-
+        return (null != error) && ("access_denied".equals(error.trim()));
     }
 
-    public Optional<String> extractAuthenticationToken(MultivaluedMap<String, String> requestHeaders) {
+    public Optional<OAuth2AccessToken> requestAccessToken(HttpServletRequest req) {
+        // User has rejected
+        if (hasBeenRejected(req))
+            return Optional.empty();
+
+        // User has accepted, so we can trade the returned code for the access token
+        return Optional.ofNullable(req.getParameter("code"))
+                .flatMap(errorAsEmpty(service::getAccessToken));
+    }
+
+    public Optional<String> extractAccessToken(MultivaluedMap<String, String> requestHeaders) {
         return Optional.ofNullable(requestHeaders.getFirst("Authorization"))
                 .map(str -> str.substring("Bearer ".length()));
     }
@@ -60,7 +60,7 @@ public class OAuthAuthorizationService {
 
     private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
     private static final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
-//    private static final String callbackUri = "http://localhost:8089/callback";
+    //    private static final String callbackUri = "http://localhost:8089/callback";
     private static final String callbackUri = "http://localhost:8080/server/oauth2callback";
     private final OAuth20Service service = new ServiceBuilder(clientId)
             .apiKey(clientId)

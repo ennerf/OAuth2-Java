@@ -23,6 +23,7 @@ public class CallbackServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 
+        // TODO: make async to avoid blocking the request handler thread
         Optional<String> userInfo = service.requestAccessToken(req)
                 .map(OAuth2AccessToken::getAccessToken)
                 .flatMap(service::getUserInfo);
