@@ -41,17 +41,19 @@ public class CallbackServlet extends HttpServlet {
         req.getSession().setAttribute("userInfo", userInfo.get());
 
         // Forward to initial request uri
-        String requestUri = decodeState(req.getParameter("state"));
-        resp.sendRedirect(requestUri);
+        String state = req.getParameter("state");
+        if (state != null) {
+            resp.sendRedirect(decodeUrl(state));
+        }
 
     }
 
-    public static String encodeState(String state) {
-        return Base64.getUrlEncoder().encodeToString(state.getBytes());
+    static String encodeUrl(String url) {
+        return Base64.getUrlEncoder().encodeToString(url.getBytes());
     }
 
-    public static String decodeState(String state) {
-        return new String(Base64.getUrlDecoder().decode(state));
+    private static String decodeUrl(String url) {
+        return new String(Base64.getUrlDecoder().decode(url));
     }
 
     @Inject

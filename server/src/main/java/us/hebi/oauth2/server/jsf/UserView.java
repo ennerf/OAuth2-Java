@@ -1,8 +1,9 @@
 package us.hebi.oauth2.server.jsf;
 
-import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
 import javax.inject.Named;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -10,8 +11,8 @@ import java.util.Map;
  * @since 21 Mar 2018
  */
 @Named
-@RequestScoped
-public class UserView {
+@ViewScoped
+public class UserView implements Serializable {
 
     public String getName() {
         Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
