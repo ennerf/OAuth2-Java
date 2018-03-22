@@ -7,6 +7,7 @@ import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.pkce.AuthorizationUrlWithPKCE;
+import com.github.scribejava.core.revoke.TokenTypeHint;
 import com.github.scribejava.httpclient.okhttp.OkHttpHttpClient;
 import com.sun.javafx.application.HostServicesDelegate;
 import fi.iki.elonen.NanoHTTPD;
@@ -84,8 +85,15 @@ public class AuthenticationService {
         }
     }
 
-    public void deleteAccessToken() {
-        accessToken = null;
+    public void revokeAccessToken() {
+        try {
+            service.revokeToken(accessToken.getRefreshToken(), TokenTypeHint.refresh_token);
+            service.revokeToken(accessToken.getAccessToken(), TokenTypeHint.access_token);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            accessToken = null;
+        }
     }
 
     public Optional<String> requestSigned(OAuthRequest oReq) {

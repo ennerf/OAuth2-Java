@@ -49,7 +49,7 @@ public class DashboardPresenter implements Initializable {
 
     @FXML
     void deleteAccessToken(ActionEvent event) {
-        authenticationService.deleteAccessToken();
+        authenticationService.revokeAccessToken();
     }
 
     @FXML
