@@ -9,20 +9,13 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.pkce.AuthorizationUrlWithPKCE;
 import com.github.scribejava.httpclient.okhttp.OkHttpHttpClient;
 import com.sun.javafx.application.HostServicesDelegate;
+import fi.iki.elonen.NanoHTTPD;
 import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.util.HashMap;
@@ -45,9 +38,8 @@ public class AuthenticationService {
             .readTimeout(3, TimeUnit.SECONDS)
             .build());
 
-    // TODO: use random port and check port on startup
-    // ((ServerConnector) server.getConnectors()[0]).getLocalPort();
-    private Server server = new Server(8089);
+    // TODO: use random port and check port on startup. Note that this requires the Desktop-OAuth2 version
+    int port = 8089;
 
     private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
     private static final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
@@ -109,45 +101,41 @@ public class AuthenticationService {
     }
 
     @PostConstruct
-    public void startJetty() throws Exception {
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        server.setHandler(context);
-        context.addServlet(new ServletHolder(new CallbackServlet()), "/callback");
-        server.start();
+    public void startServer() throws Exception {
+        httpServer.start();
     }
 
     @PreDestroy
-    public void stopJetty() {
-        server.setStopTimeout(100);
-        try {
-            server.stop();
-        } catch (Exception e) {
-            System.err.println("Failed to stop Jetty: " + e.getMessage());
-        }
+    public void stopServer() {
+        httpServer.stop();
     }
 
-    class CallbackServlet extends HttpServlet {
+    // Embedded http server that handles the OAuth2 callback
+    private final NanoHTTPD httpServer = new NanoHTTPD(port) {
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        public Response serve(IHTTPSession session) {
+            if (session.getMethod() == Method.GET && "/callback".equalsIgnoreCase(session.getUri())) {
 
-            // if the user denied access, we get back an error, ex
-            // error=access_denied&state=session%3Dpotatoes
-            if (req.getParameter("error") != null) {
-                resp.getWriter().println(req.getParameter("error"));
-                return;
+                // if the user denied access, we get back an error, ex
+                // error=access_denied&state=session%3Dpotatoes
+                if (session.getParameters().get("error") != null) {
+                    return newFixedLengthResponse("error");
+                }
+
+                // Trade the request token and verifier for the access token
+                try {
+                    accessToken = service.getAccessToken(
+                            session.getParameters().get("code").get(0),
+                            authUrl.getPkce().getCodeVerifier());
+                    return newFixedLengthResponse("Successfully logged in. You can close this window.");
+                } catch (Exception e) {
+                    return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_HTML, e.getMessage());
+                }
+
             }
 
-            // Trade the request token and verifier for the access token
-            try {
-                accessToken = service.getAccessToken(req.getParameter("code"), authUrl.getPkce().getCodeVerifier());
-                resp.getWriter().println("Successfully logged in. You can close this window.");
-            } catch (Exception e) {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
-                return;
-            }
-
+            return super.serve(session);
         }
-    }
+    };
 
 }
