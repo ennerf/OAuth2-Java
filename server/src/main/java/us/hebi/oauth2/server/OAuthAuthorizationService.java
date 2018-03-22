@@ -21,10 +21,11 @@ import static us.hebi.oauth2.server.OptionalUtils.*;
  */
 public class OAuthAuthorizationService {
 
-    public String getAuthorizationUrl() {
+    public String getAuthorizationUrl(String state) {
         Map<String, String> additionalParams = new HashMap<>();
         additionalParams.put("access_type", "offline"); // here we are asking to access to user's data while they are not signed in (get refresh tokens)
         additionalParams.put("approval_prompt", "force"); // this requires them to verify which account
+        additionalParams.put("state", state);
         return service.getAuthorizationUrl(additionalParams);
     }
 

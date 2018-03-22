@@ -28,7 +28,8 @@ public class AuthenticationFilter implements Filter {
 
         // Require authentication
         if (userInfo == null) {
-            res.sendRedirect(service.getAuthorizationUrl());
+            String state = CallbackServlet.encodeState(req.getRequestURI());
+            res.sendRedirect(service.getAuthorizationUrl(state));
             return;
         }
 

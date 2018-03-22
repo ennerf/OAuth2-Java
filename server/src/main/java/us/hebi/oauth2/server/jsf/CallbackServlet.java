@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Optional;
 
 /**
@@ -38,8 +39,19 @@ public class CallbackServlet extends HttpServlet {
 
         // Authenticated
         req.getSession().setAttribute("userInfo", userInfo.get());
-        resp.sendRedirect("faces/index.xhtml"); // TODO: proper redirect to previous url using optional state
 
+        // Forward to initial request uri
+        String requestUri = decodeState(req.getParameter("state"));
+        resp.sendRedirect(requestUri);
+
+    }
+
+    public static String encodeState(String state) {
+        return Base64.getUrlEncoder().encodeToString(state.getBytes());
+    }
+
+    public static String decodeState(String state) {
+        return new String(Base64.getUrlDecoder().decode(state));
     }
 
     @Inject
