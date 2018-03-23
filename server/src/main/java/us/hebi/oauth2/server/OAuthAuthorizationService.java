@@ -59,8 +59,8 @@ public class OAuthAuthorizationService {
         }
     }
 
-    private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
-    private static final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
+    private static final String clientId = "739350014484-qijtb6bcaagjk9rq4kh6tt8o7g804n56.apps.googleusercontent.com";
+    private static final String clientSecret = "JSX6Wai753bDz_DwucnqV7Iz";
     //    private static final String callbackUri = "http://localhost:8089/callback";
     private static final String callbackUri = "http://localhost:8080/server/oauth2callback";
     private final OAuth20Service service = new ServiceBuilder(clientId)

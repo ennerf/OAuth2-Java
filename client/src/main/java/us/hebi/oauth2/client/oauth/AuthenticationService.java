@@ -39,22 +39,7 @@ public class AuthenticationService {
             .readTimeout(3, TimeUnit.SECONDS)
             .build());
 
-    // TODO: use random port and check port on startup. Note that this requires the Desktop-OAuth2 version
-    // port = 0 with httpServer.getListeningPort()
-    private final int port = 8089;
-
-    private static final String clientId = "739350014484-j652uuj1mrq8p3r5m5kt0kjs9b1fmaag.apps.googleusercontent.com";
-    private static final String clientSecret = "V2q2tbZ4Zv7cPFy7fHtUFnd9";
-    private static final String callbackUri = "http://localhost:8089/callback";
-    private final OAuth20Service service = new ServiceBuilder(clientId)
-            .apiKey(clientId) // the client id from the api console registration
-            .apiSecret(clientSecret)
-            .callback(callbackUri) // the servlet that google redirects to after authorization
-            .scope("openid profile email") // scope is the api permissions we are requesting
-            .responseType("code")
-            .httpClient(httpClient)
-            .build(GoogleApi20.instance());
-
+    private OAuth20Service service;
     private volatile AuthorizationUrlWithPKCE authUrl = null;
     private volatile OAuth2AccessToken accessToken = null;
 
@@ -112,6 +97,17 @@ public class AuthenticationService {
     @PostConstruct
     public void startServer() throws Exception {
         httpServer.start();
+        final String clientId = "739350014484-qijtb6bcaagjk9rq4kh6tt8o7g804n56.apps.googleusercontent.com";
+        final String clientSecret = "JSX6Wai753bDz_DwucnqV7Iz";
+        final String callbackUri = "http://localhost:" + httpServer.getListeningPort() + "/callback";
+        service = new ServiceBuilder(clientId)
+                .apiKey(clientId) // the client id from the api console registration
+                .apiSecret(clientSecret)
+                .callback(callbackUri) // the servlet that google redirects to after authorization
+                .scope("openid profile email") // scope is the api permissions we are requesting
+                .responseType("code")
+                .httpClient(httpClient)
+                .build(GoogleApi20.instance());
     }
 
     @PreDestroy
@@ -120,7 +116,7 @@ public class AuthenticationService {
     }
 
     // Embedded http server that handles the OAuth2 callback
-    private final NanoHTTPD httpServer = new NanoHTTPD(port) {
+    private final NanoHTTPD httpServer = new NanoHTTPD(0) {
         @Override
         public Response serve(IHTTPSession session) {
 
