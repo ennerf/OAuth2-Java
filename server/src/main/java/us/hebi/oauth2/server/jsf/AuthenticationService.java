@@ -6,6 +6,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.pkce.AuthorizationUrlWithPKCE;
 
 import javax.ejb.Singleton;
 import javax.servlet.AsyncContext;
@@ -65,8 +66,10 @@ class AuthenticationService {
                     .build(GoogleApi20.instance());
 
             // Store auth service in session for the returning call
+            AuthorizationUrlWithPKCE urlWithPKCE = service.getAuthorizationUrlWithPKCE(ADDITIONAL_PARAMS);
             req.getSession().setAttribute("oauth2Service", service);
-            res.sendRedirect(service.getAuthorizationUrl(ADDITIONAL_PARAMS));
+            req.getSession().setAttribute("pkceVerifier", urlWithPKCE.getPkce().getCodeVerifier());
+            res.sendRedirect(urlWithPKCE.getAuthorizationUrl());
 
         }
         return isAuthenticated;
@@ -100,8 +103,9 @@ class AuthenticationService {
                 // Trade one time token with access token
                 String code = req.getParameter(CODE);
                 OAuth20Service service = (OAuth20Service) session.getAttribute("oauth2Service");
+                String verifier = (String) session.getAttribute("pkceVerifier");
                 if (service == null || code == null) return;
-                OAuth2AccessToken token = service.getAccessToken(code);
+                OAuth2AccessToken token = service.getAccessToken(code, verifier);
 
                 // Get user info
                 OAuthRequest oReq = new OAuthRequest(Verb.GET, GOOGLE_PLUS_INFO_ENDPOINT);
