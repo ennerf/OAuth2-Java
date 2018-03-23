@@ -41,7 +41,7 @@ class AuthenticationService {
      * @throws ServletException
      */
     boolean requireUserAuthentication(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
-        boolean isAuthenticated = req.getSession().getAttribute("userInfo") != null;
+        boolean isAuthenticated = UserInfo.fromSession(req.getSession()).isPresent();
         if (!isAuthenticated) {
 
             // Dynamically build callback URI so the server can run on any port. This is used to
@@ -108,12 +108,13 @@ class AuthenticationService {
                 OAuth2AccessToken token = service.getAccessToken(code, verifier);
 
                 // Get user info
-                OAuthRequest oReq = new OAuthRequest(Verb.GET, GOOGLE_PLUS_INFO_ENDPOINT);
+                OAuthRequest oReq = new OAuthRequest(Verb.GET, UserInfo.API_ENDPOINT);
                 service.signRequest(token, oReq);
                 String json = service.execute(oReq).getBody();
 
                 // Store user data (could also do proxy login via req.login("user", "pw"))
-                session.setAttribute("userInfo", json);
+                UserInfo info = UserInfo.fromJson(json);
+                info.storeInSession(session);
 
                 // Forward to initial request uri
                 String state = req.getParameter("state");
@@ -147,7 +148,6 @@ class AuthenticationService {
     static final String CALLBACK_SERVLET_PATH = "/oauth2callback";
     private static final String CLIENT_ID = "739350014484-qijtb6bcaagjk9rq4kh6tt8o7g804n56.apps.googleusercontent.com";
     private static final String CLIENT_SECRET = "JSX6Wai753bDz_DwucnqV7Iz";
-    private static final String GOOGLE_PLUS_INFO_ENDPOINT = "https://www.googleapis.com/plus/v1/people/me";
     private static final Map<String, String> ADDITIONAL_PARAMS = new HashMap<>();
 
     static {

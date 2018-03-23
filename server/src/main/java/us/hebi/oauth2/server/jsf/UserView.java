@@ -1,10 +1,8 @@
 package us.hebi.oauth2.server.jsf;
 
-import javax.faces.context.FacesContext;
 import javax.faces.view.ViewScoped;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.util.Map;
 
 /**
  * @author Florian Enner < florian @ hebirobotics.com >
@@ -15,13 +13,15 @@ import java.util.Map;
 public class UserView implements Serializable {
 
     public String getName() {
-        Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
-        return String.valueOf(sessionMap.get("user"));
+        return UserInfo.fromFacesContext()
+                .map(UserInfo::getDisplayName)
+                .orElse("N/A");
     }
 
     public String getDetails() {
-        Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
-        return String.valueOf(sessionMap.get("userInfo"));
+        return UserInfo.fromFacesContext()
+                .map(Object::toString)
+                .orElse("N/A");
     }
 
 }
