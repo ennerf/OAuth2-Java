@@ -8,6 +8,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
+ * Filter that intercepts all requests to JSF pages and checks
+ * for user authentication.
+ *
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
  */

@@ -11,6 +11,8 @@ import java.io.IOException;
 import static us.hebi.oauth2.server.jsf.AuthenticationService.*;
 
 /**
+ * Endpoint that handles info returning from the OAuth2 provider
+ *
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
  */
