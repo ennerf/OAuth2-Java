@@ -15,7 +15,7 @@ import static us.hebi.oauth2.server.jsf.AuthenticationService.*;
  * @since 21 Mar 2018
  */
 @WebServlet(urlPatterns = CALLBACK_SERVLET_PATH, asyncSupported = true)
-public class CallbackServlet extends HttpServlet {
+public class AuthenticationCallback extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {

@@ -22,6 +22,8 @@ import java.util.concurrent.ExecutionException;
 import static com.github.scribejava.core.model.OAuthConstants.*;
 
 /**
+ * Handles user logins using Google's OAuth2 API
+ *
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
  */
@@ -41,9 +43,9 @@ class AuthenticationService {
         boolean isAuthenticated = req.getSession().getAttribute("userInfo") != null;
         if (!isAuthenticated) {
 
-            // Dynamically build callback URI so the server can run on any port. This is used to support various
-            // local test environments. In production this can just be the fixed url.
-            // e.g. "http://localhost:8080/server/oauth2callback";
+            // Dynamically build callback URI so the server can run on any port. This is used to
+            // support local test environments. In production this can be a fixed url.
+            // e.g. "http://localhost:28080/server/oauth2callback";
             // See https://stackoverflow.com/a/42706412/3574093 for URL parts
             StringBuffer callbackUrl = req.getRequestURL();
             callbackUrl.setLength(callbackUrl.length() - req.getRequestURI().length());

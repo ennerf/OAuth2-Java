@@ -16,22 +16,18 @@ public class AuthenticationFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-
     }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-
         if (authenticationService.requireUserAuthentication((HttpServletRequest) request, (HttpServletResponse) response)) {
             // User is logged in, so continue
             chain.doFilter(request, response);
         }
-
     }
 
     @Override
     public void destroy() {
-
     }
 
     @Inject
