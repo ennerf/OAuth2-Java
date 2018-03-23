@@ -2,6 +2,7 @@ package us.hebi.oauth2.server.jsf;
 
 import javax.inject.Inject;
 import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.IOException;
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
  */
+@WebFilter(filterName = "authenticationFilter", servletNames = {"Faces Servlet"})
 public class AuthenticationFilter implements Filter {
 
     @Override
