@@ -1,9 +1,6 @@
 package us.hebi.oauth2.server.rest;
 
-import us.hebi.oauth2.server.OAuthAuthorizationService;
-
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.servlet.http.HttpServletRequest;
@@ -12,10 +9,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
+import java.util.Optional;
 
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -49,15 +44,16 @@ public class RestResource {
 
         // Check if user is authenticated
         // TODO: filter users based on e.g. domain
-        return service.extractAccessToken(headers.getRequestHeaders())
-                .flatMap(service::getUserInfo)
+        return extractAccessToken(headers.getRequestHeaders())
                 .map(Response::ok)
                 .orElseGet(() -> Response.status(FORBIDDEN))
                 .build();
 
     }
 
-    @Inject
-    OAuthAuthorizationService service;
+    private Optional<String> extractAccessToken(MultivaluedMap<String, String> requestHeaders) {
+        return Optional.ofNullable(requestHeaders.getFirst("Authorization"))
+                .map(str -> str.substring("Bearer ".length()));
+    }
 
 }

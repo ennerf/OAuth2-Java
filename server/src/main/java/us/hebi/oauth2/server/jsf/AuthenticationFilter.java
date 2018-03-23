@@ -1,7 +1,5 @@
 package us.hebi.oauth2.server.jsf;
 
-import us.hebi.oauth2.server.OAuthAuthorizationService;
-
 import javax.inject.Inject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -21,23 +19,12 @@ public class AuthenticationFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        // Check if user is authenticated
-        HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
-        String userInfo = (String) req.getSession().getAttribute("userInfo");
 
-        // Require authentication
-        if (userInfo == null) {
-            String state = CallbackServlet.encodeUrl(req.getRequestURI());
-            res.sendRedirect(service.getAuthorizationUrl(state));
-            return;
+        if (authenticationService.requireUserAuthentication((HttpServletRequest) request, (HttpServletResponse) response)) {
+            // User is logged in, so continue
+            chain.doFilter(request, response);
         }
 
-        // Pass on data
-        req.getSession().setAttribute("user", "User Name");
-
-        // Continue
-        chain.doFilter(request, response);
     }
 
     @Override
@@ -46,6 +33,6 @@ public class AuthenticationFilter implements Filter {
     }
 
     @Inject
-    OAuthAuthorizationService service;
+    AuthenticationService authenticationService;
 
 }
