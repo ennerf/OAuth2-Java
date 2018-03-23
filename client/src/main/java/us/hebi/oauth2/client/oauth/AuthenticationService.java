@@ -100,9 +100,8 @@ public class AuthenticationService {
         final String clientId = "739350014484-qijtb6bcaagjk9rq4kh6tt8o7g804n56.apps.googleusercontent.com";
         final String clientSecret = "JSX6Wai753bDz_DwucnqV7Iz";
         final String callbackUri = "http://localhost:" + httpServer.getListeningPort() + "/callback";
-        service = new ServiceBuilder(clientId)
-                .apiKey(clientId) // the client id from the api console registration
-                .apiSecret(clientSecret)
+        service = new ServiceBuilder(clientId) // the client id from the api console registration
+                .apiSecret(clientSecret) // the client secret from the api console registration
                 .callback(callbackUri) // the servlet that google redirects to after authorization
                 .scope("openid profile email") // scope is the api permissions we are requesting
                 .responseType("code")

@@ -57,7 +57,6 @@ class AuthenticationService {
 
             // Forward non-authenticated users to OAuth login
             final OAuth20Service service = new ServiceBuilder(CLIENT_ID)
-                    .apiKey(CLIENT_ID)
                     .apiSecret(CLIENT_SECRET)
                     .callback(callbackUrl.toString())
                     .state(state)

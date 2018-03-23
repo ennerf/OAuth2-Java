@@ -23,14 +23,17 @@ public class UserInfo implements Serializable {
 
     String kind;
     String etag;
+    String gender;
     List<Email> emails;
     String objectType;
     String id;
     String displayName;
     Name name;
+    String url;
     Image image;
     boolean isPlusUser;
     String language;
+    int circledByCount;
     boolean verified;
     String domain;
 
@@ -57,7 +60,7 @@ public class UserInfo implements Serializable {
         return gson.toJson(this);
     }
 
-    static UserInfo fromJson(String json) {
+    public static UserInfo fromJson(String json) {
         return gson.fromJson(json, UserInfo.class);
     }
 
@@ -81,7 +84,7 @@ public class UserInfo implements Serializable {
         return Optional.empty();
     }
 
-    static String API_ENDPOINT = "https://www.googleapis.com/plus/v1/people/me";
+    public static String API_ENDPOINT = "https://www.googleapis.com/plus/v1/people/me";
     private static String SESSION_VAR = "userInfo";
     private static Gson gson = new GsonBuilder()
             .setPrettyPrinting()
