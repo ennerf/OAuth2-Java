@@ -1,6 +1,5 @@
 package us.hebi.oauth2.server.jsf;
 
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,7 +14,7 @@ import static us.hebi.oauth2.server.jsf.AuthenticationService.*;
  * @author Florian Enner < florian @ hebirobotics.com >
  * @since 21 Mar 2018
  */
-@WebServlet(urlPatterns = CALLBACK_URI, asyncSupported = true)
+@WebServlet(urlPatterns = CALLBACK_SERVLET_PATH, asyncSupported = true)
 public class CallbackServlet extends HttpServlet {
 
     @Override
