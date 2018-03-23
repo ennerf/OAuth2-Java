@@ -17,7 +17,6 @@ import okhttp3.OkHttpClient;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +30,9 @@ import java.util.concurrent.TimeUnit;
 public class AuthenticationService {
 
     // Enable cookies in http handler to work with sessions
-    private final CookieHandler cookieHandler = new CookieManager();
+    private final CookieManager cookieHandler = new CookieManager();
     private final OkHttpHttpClient httpClient = new OkHttpHttpClient(new OkHttpClient.Builder()
+            .sslSocketFactory(CertificateUtils.getContextWithLetsEncrypt().getSocketFactory())
             .cookieJar(new JavaNetCookieJar(cookieHandler))
             .connectTimeout(5, TimeUnit.SECONDS)
             .writeTimeout(3, TimeUnit.SECONDS)
@@ -90,6 +90,12 @@ public class AuthenticationService {
         } catch (Exception e) {
             System.err.println(e.getMessage());
             return Optional.empty();
+        } finally {
+            System.out.println("--- Cookies ---");
+            cookieHandler.getCookieStore().getCookies().forEach(cookie ->{
+                System.out.println("cookie.getDomain() = " + cookie.getDomain());
+                System.out.println("cookie.toString() = " + cookie.toString());
+            });
         }
 
     }

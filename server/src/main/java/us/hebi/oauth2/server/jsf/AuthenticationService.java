@@ -58,7 +58,7 @@ class AuthenticationService {
             // Forward non-authenticated users to OAuth login
             final OAuth20Service service = new ServiceBuilder(CLIENT_ID)
                     .apiSecret(CLIENT_SECRET)
-                    .callback(callbackUrl.toString())
+                    .callback("https://production.hebi.us" + CALLBACK_SERVLET_PATH)
                     .state(state)
                     .scope("openid profile email")
                     .responseType(CODE)
@@ -145,8 +145,8 @@ class AuthenticationService {
     }
 
     static final String CALLBACK_SERVLET_PATH = "/oauth2callback";
-    private static final String CLIENT_ID = "739350014484-qijtb6bcaagjk9rq4kh6tt8o7g804n56.apps.googleusercontent.com";
-    private static final String CLIENT_SECRET = "JSX6Wai753bDz_DwucnqV7Iz";
+    private static final String CLIENT_ID = "739350014484-kt2s3nb49u6tf0cd6gq6c2cpcif2abvc.apps.googleusercontent.com";
+    private static final String CLIENT_SECRET = "x5_DnEtSywWZ6qd3QUOu1vlR";
     private static final Map<String, String> ADDITIONAL_PARAMS = new HashMap<>();
 
     static {
