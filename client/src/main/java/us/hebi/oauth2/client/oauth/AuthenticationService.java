@@ -93,8 +93,16 @@ public class AuthenticationService {
         } finally {
             System.out.println("--- Cookies ---");
             cookieHandler.getCookieStore().getCookies().forEach(cookie ->{
+                System.out.println(">>");
                 System.out.println("cookie.getDomain() = " + cookie.getDomain());
                 System.out.println("cookie.toString() = " + cookie.toString());
+                System.out.println("cookie.getPath() = " + cookie.getPath());
+                System.out.println("cookie.getComment() = " + cookie.getComment());
+                System.out.println("cookie.getCommentURL() = " + cookie.getCommentURL());
+                System.out.println("cookie.getName() = " + cookie.getName());
+                System.out.println("cookie.getPortlist() = " + cookie.getPortlist());
+                System.out.println("cookie.getValue() = " + cookie.getValue());
+                System.out.println("<<");
             });
         }
 

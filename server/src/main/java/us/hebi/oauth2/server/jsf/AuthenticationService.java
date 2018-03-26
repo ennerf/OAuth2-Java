@@ -118,7 +118,9 @@ class AuthenticationService {
                 // Forward to initial request uri
                 String state = req.getParameter("state");
                 if (state != null) {
-                    resp.sendRedirect(decodeUrl(state));
+                    String url = decodeUrl(state);
+                    resp.getWriter().write(url);
+                    resp.sendRedirect(url);
                 }
 
             } catch (IOException | ExecutionException | InterruptedException e) {
