@@ -39,7 +39,7 @@ public class AuthenticationService {
             .readTimeout(3, TimeUnit.SECONDS)
             .build());
 
-    private OAuth20Service service;
+    protected OAuth20Service service;
     private volatile AuthorizationUrlWithPKCE authUrl = null;
     private volatile OAuth2AccessToken accessToken = null;
 
@@ -94,6 +94,10 @@ public class AuthenticationService {
 
     }
 
+    protected OAuth2AccessToken exchangeAccessToken(String code, String verifier) throws Exception {
+        return service.getAccessToken(code, verifier);
+    }
+
     @PostConstruct
     public void startServer() throws Exception {
         httpServer.start();
@@ -130,11 +134,12 @@ public class AuthenticationService {
 
                 // Trade the request token and verifier for the access token
                 try {
-                    accessToken = service.getAccessToken(
-                            session.getParameters().get("code").get(0),
-                            authUrl.getPkce().getCodeVerifier());
+                    String code = session.getParameters().get("code").get(0);
+                    String verifier = authUrl.getPkce().getCodeVerifier();
+                    accessToken = exchangeAccessToken(code, verifier);
                     return newFixedLengthResponse("Successfully logged in. You can close this window.");
                 } catch (Exception e) {
+                    e.printStackTrace();
                     return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_HTML, e.getMessage());
                 }
 
